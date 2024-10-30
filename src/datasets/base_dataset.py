@@ -18,7 +18,7 @@ class BaseDataset(Dataset):
     """
 
     def __init__(
-        self, index, limit=None, shuffle_index=False, instance_transforms=None
+        self, index=None, limit=None, shuffle_index=False, instance_transforms=None
     ):
         """
         Args:

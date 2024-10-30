@@ -1,0 +1,32 @@
+defaults:
+  - model: unet
+  - writer: wandb
+  - metrics: fid_metric
+  - datasets: onebatchtest
+  - dataloader: example
+  - _self_
+optimizer:
+  _target_: torch.optim.Adam
+  lr: 3e-4
+  # betas: [0.5, 0.9]
+  # eps: 1e-7
+  # weight_decay: 1e-5
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.ConstantLR
+  # T_0: 100 # custom addition
+  # eta_min: 5e-5
+  factor: 1.
+loss_function:
+  _target_: src.loss.ExampleLoss
+trainer:
+  log_step: 10
+  n_epochs: 100
+  device_tensors: ["img", "label"] # which tensors should be on device (ex. GPU)
+  resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
+  device: "cpu" # device name or "auto"
+  override: True # if True, will override the previous run with the same name
+  monitor: "min TRAIN_FID" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
+  save_period: 5 # checkpoint each save_period epochs in addition to the best epoch
+  early_stop: ${trainer.n_epochs} # epochs for early stopping
+  save_dir: "saved"
+  seed: 1

@@ -1,0 +1,4 @@
+test:
+  _target_: src.datasets.FoodDataset
+  root_dir: '/Users/karim/Downloads/food_data/test'
+  train: False

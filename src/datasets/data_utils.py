@@ -59,12 +59,11 @@ def get_dataloaders(config, device):
             tensor name.
     """
     # transforms or augmentations init
-    batch_transforms = instantiate(config.transforms.batch_transforms)
-    move_batch_transforms_to_device(batch_transforms, device)
+    # batch_transforms = instantiate(config.transforms.batch_transforms)
+    # move_batch_transforms_to_device(batch_transforms, device)
 
     # dataset partitions init
     datasets = instantiate(config.datasets)  # instance transforms are defined inside
-
     # dataloaders init
     dataloaders = {}
     for dataset_partition in config.datasets.keys():
@@ -78,11 +77,11 @@ def get_dataloaders(config, device):
         partition_dataloader = instantiate(
             config.dataloader,
             dataset=dataset,
-            collate_fn=collate_fn,
+            # collate_fn=collate_fn,
             drop_last=(dataset_partition == "train"),
             shuffle=(dataset_partition == "train"),
             worker_init_fn=set_worker_seed,
         )
         dataloaders[dataset_partition] = partition_dataloader
 
-    return dataloaders, batch_transforms
+    return dataloaders, None

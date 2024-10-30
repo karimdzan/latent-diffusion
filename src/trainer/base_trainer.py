@@ -3,10 +3,13 @@ from abc import abstractmethod
 import torch
 from numpy import inf
 from torch.nn.utils import clip_grad_norm_
+from torchvision.transforms import ToPILImage
 from tqdm.auto import tqdm
 
 from src.datasets.data_utils import inf_loop
+from src.logger.utils import save_images
 from src.metrics.tracker import MetricTracker
+from src.model.ldm import Diffusion
 from src.utils.io_utils import ROOT_PATH
 
 
@@ -18,6 +21,7 @@ class BaseTrainer:
     def __init__(
         self,
         model,
+        vae,
         criterion,
         metrics,
         optimizer,
@@ -67,6 +71,8 @@ class BaseTrainer:
         self.log_step = config.trainer.get("log_step", 50)
 
         self.model = model
+        self.vae = vae
+        self.diffusion = Diffusion(model=model, device=device, sample_every=5)
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr_scheduler = lr_scheduler
@@ -237,6 +243,24 @@ class BaseTrainer:
                 # because we are interested in recent train metrics
                 last_train_metrics = self.train_metrics.result()
                 self.train_metrics.reset()
+
+                size = batch["latent"].size()
+                x_self_cond = batch.get("x_self_cond", None)
+                classes = batch.get("label", None)
+                eta = 0.0  # DDIM deterministic sampling
+
+                # Generate samples with DDIM
+                sampled_latents = self.diffusion.p_sample(
+                    size=size, x_self_cond=x_self_cond, classes=classes, eta=eta
+                )
+                # with torch.no_grad():
+                #     imgs = self.vae.decode(sampled_latents).sample
+                imgs = sampled_latents
+                save_images(imgs, "./", f"{epoch}")
+                # batch["sampled_imgs"] = (imgs / 2 + 0.5).clamp(0, 1)
+
+                # for met in self.metrics["train"]:
+                #     self.train_metrics.update(met.name, met(**batch))
             if batch_idx + 1 >= self.epoch_len:
                 break
 
@@ -364,8 +388,8 @@ class BaseTrainer:
                 the dataloader (possibly transformed via batch transform).
         """
         # do batch transforms on device
-        transform_type = "train" if self.is_train else "inference"
-        transforms = self.batch_transforms.get(transform_type)
+        # transform_type = "train" if self.is_train else "inference"
+        transforms = None
         if transforms is not None:
             for transform_name in transforms.keys():
                 batch[transform_name] = transforms[transform_name](

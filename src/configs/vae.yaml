@@ -1,28 +1,27 @@
 defaults:
-  - model: baseline
+  - model: vae
   - writer: wandb
-  - metrics: example
-  - datasets: example
+  - metrics: vae_metric
+  - datasets: onebatchtest_vae
   - dataloader: example
-  - transforms: example
   - _self_
 optimizer:
   _target_: torch.optim.Adam
   lr: 3e-4
 lr_scheduler:
-  _target_: torch.optim.lr_scheduler.StepLR
-  gamma: 0.9
-  step_size: ${trainer.epoch_len}
+  _target_: torch.optim.lr_scheduler.OneCycleLR
+  max_lr: 0.001
+  epochs: ${trainer.n_epochs}
+  steps_per_epoch: 10
 loss_function:
-  _target_: src.loss.ExampleLoss
+  _target_: src.loss.VAELoss
 trainer:
   log_step: 50
-  n_epochs: 100
-  epoch_len: 500
-  device_tensors: ["data_object", "labels"] # which tensors should be on device (ex. GPU)
+  n_epochs: 5
+  device_tensors: ["img", "label"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
-  device: auto # device name or "auto"
-  override: False # if True, will override the previous run with the same name
+  device: "mps" # device name or "auto"
+  override: True # if True, will override the previous run with the same name
   monitor: "max test_MulticlassAccuracy" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
   save_period: 5 # checkpoint each save_period epochs in addition to the best epoch
   early_stop: ${trainer.n_epochs} # epochs for early stopping

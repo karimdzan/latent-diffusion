@@ -1,0 +1,11 @@
+device: "cpu"
+train:
+  - _target_: src.metrics.fid.FIDMetric
+    device: ${metrics.device}
+    name: "TRAIN_FID"
+    dims: 2048
+inference:
+  - _target_: src.metrics.fid.FIDMetric
+    device: ${metrics.device}
+    name: "TEST_FID"
+    dims: 2048

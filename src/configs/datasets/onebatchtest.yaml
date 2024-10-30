@@ -1,0 +1,5 @@
+train:
+  _target_: src.datasets.FoodDataset
+  root_dir: '/Users/karim/Downloads/food_data'
+  train: True
+  limit: 4

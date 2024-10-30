@@ -2,6 +2,7 @@ import warnings
 
 import hydra
 import torch
+from diffusers import AutoencoderKL
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
@@ -12,7 +13,7 @@ from src.utils.init_utils import set_random_seed, setup_saving_and_logging
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-@hydra.main(version_base=None, config_path="src/configs", config_name="baseline")
+@hydra.main(version_base=None, config_path="src/configs", config_name="ldm")
 def main(config):
     """
     Main script for training. Instantiates the model, optimizer, scheduler,
@@ -38,9 +39,13 @@ def main(config):
     dataloaders, batch_transforms = get_dataloaders(config, device)
 
     # build model architecture, then print to console
-    model = instantiate(config.model).to(device)
+    model = instantiate(config.model)
+    model = model.to(device)
     logger.info(model)
 
+    vae = AutoencoderKL.from_pretrained(
+        "CompVis/stable-diffusion-v1-4", subfolder="vae"
+    ).to(device)
     # get function handles of loss and metrics
     loss_function = instantiate(config.loss_function).to(device)
     metrics = instantiate(config.metrics)
@@ -56,6 +61,7 @@ def main(config):
 
     trainer = Trainer(
         model=model,
+        vae=vae,
         criterion=loss_function,
         metrics=metrics,
         optimizer=optimizer,
