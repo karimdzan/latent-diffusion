@@ -182,21 +182,18 @@ class Unet(nn.Module):
         self.final_conv = nn.Conv2d(img_size, out_channels, 1)
 
         if classes:
-            if isinstance(classes, int):
-                self.classes = [classes]
-            else:
-                self.classes = classes
+            self.classes = classes
             # nn.Embeddings are commented out for now
             # the new approach with MLP should be flexible
             # when multi-class labels are supplied
-            # self.lbl_embeds = nn.Embedding(classes, time_dim)
-            self.lbl_embeds = nn.Sequential(
-                *[
-                    nn.Linear(len(self.classes), time_dim),
-                    nn.GELU(),
-                    nn.Linear(time_dim, time_dim),
-                ]
-            )
+            self.lbl_embeds = nn.Embedding(classes, time_dim)
+            # self.lbl_embeds = nn.Sequential(
+            #     *[
+            #         nn.Linear(len(self.classes), time_dim),
+            #         nn.GELU(),
+            #         nn.Linear(time_dim, time_dim),
+            #     ]
+            # )
 
     def forward(self, x, time, x_self_cond=None, lbls=None):
         if self.self_condition:
@@ -209,8 +206,7 @@ class Unet(nn.Module):
         t = self.time_mlp(time)
 
         if lbls is not None:
-            lbls = lbls.to(torch.float32)
-            t += self.lbl_embeds(lbls.reshape(-1, 1))
+            t += self.lbl_embeds(lbls)
 
         h = []
 

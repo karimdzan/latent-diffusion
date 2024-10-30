@@ -7,15 +7,15 @@ defaults:
   - _self_
 optimizer:
   _target_: torch.optim.Adam
-  lr: 3e-4
+  lr: 1e-3
   # betas: [0.5, 0.9]
   # eps: 1e-7
   # weight_decay: 1e-5
 lr_scheduler:
-  _target_: torch.optim.lr_scheduler.ConstantLR
-  # T_0: 100 # custom addition
-  # eta_min: 5e-5
-  factor: 1.
+  _target_: torch.optim.lr_scheduler.CosineAnnealingWarmRestarts
+  T_0: 25
+  T_mult: 1
+  eta_min: 1e-5
 loss_function:
   _target_: src.loss.ExampleLoss
 trainer:

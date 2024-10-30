@@ -1,5 +1,4 @@
 train:
   _target_: src.datasets.FoodDataset
-  root_dir: '/Users/karim/Downloads/food_data'
-  train: True
-  limit: 4
+  root: '/Users/karim/Downloads/food_data/train'
+  limit: 1

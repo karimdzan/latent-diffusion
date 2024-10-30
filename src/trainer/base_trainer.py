@@ -253,9 +253,9 @@ class BaseTrainer:
                 sampled_latents = self.diffusion.p_sample(
                     size=size, x_self_cond=x_self_cond, classes=classes, eta=eta
                 )
-                # with torch.no_grad():
-                #     imgs = self.vae.decode(sampled_latents).sample
-                imgs = sampled_latents
+                with torch.no_grad():
+                    imgs = self.vae.decode(sampled_latents).sample
+                # imgs = sampled_latents
                 save_images(imgs, "./", f"{epoch}")
                 # batch["sampled_imgs"] = (imgs / 2 + 0.5).clamp(0, 1)
 

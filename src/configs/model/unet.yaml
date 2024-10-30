@@ -1,15 +1,15 @@
 _target_: src.model.Unet
-img_size: 64                   # Latent space of 8x8
+img_size: 8                   # Latent space of 8x8
 init_dim: 64                  # Initial dimension size for downsampling
-dim_mults: [1, 2, 2, 4]          # Multiplier sequence for dimensionality in each downsampling stage
+dim_mults: [1, 2, 4, 8]          # Multiplier sequence for dimensionality in each downsampling stage
 time_dim: 256                 # Time embedding dimension
-in_channels: 3                # Number of channels in the latent space
-out_channels: 3               # Output channels to match input channels
+in_channels: 4                # Number of channels in the latent space
+out_channels: 4               # Output channels to match input channels
 down_kern: 2                  # Kernel size for downsampling
 up_scale: 2                   # Upscaling factor for each upsampling layer
-resnet_stacks: 2              # Number of ResNet blocks per stage
-attn_heads: 4                 # Attention heads in attention blocks
-attn_head_res: 32             # Dimension per head in attention blocks
+resnet_stacks: 3              # Number of ResNet blocks per stage
+attn_heads: 8                 # Attention heads in attention blocks
+attn_head_res: 64             # Dimension per head in attention blocks
 self_condition: False         # Self-conditioning (set to false)
-resnet_grnorm_groups: 32      # Number of groups for group normalization in ResNet blocks
+resnet_grnorm_groups: 8      # Number of groups for group normalization in ResNet blocks
 classes: 101

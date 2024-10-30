@@ -104,8 +104,8 @@ class Diffusion(nn.Module):
         self.timesteps = timesteps
         self.sample_every = sample_every
         self.device = device
-        # betas = cosine_beta_schedule(timesteps=timesteps)
-        betas = torch.linspace(0.0001, 0.02, timesteps)
+        betas = cosine_beta_schedule(timesteps=timesteps)
+        # betas = torch.linspace(0.0001, 0.02, timesteps)
         dif_params = forward_diffusion_params(betas, timesteps)
         self.betas = dif_params[0]
         self.sqrt_recip_alphas = dif_params[1]

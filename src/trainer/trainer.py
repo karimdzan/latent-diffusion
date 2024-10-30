@@ -17,9 +17,9 @@ class Trainer(BaseTrainer):
             self.optimizer.zero_grad()
 
         if self.is_train:
-            # with torch.no_grad():
-            #     latent = self.vae.encode(batch["img"]).latent_dist.sample()
-            latent = batch["img"]
+            with torch.no_grad():
+                latent = self.vae.encode(batch["img"]).latent_dist.sample()
+            # latent = batch["img"]
             all_losses = self.diffusion.get_loss(
                 x_start=latent,
                 classes=batch["label"],
