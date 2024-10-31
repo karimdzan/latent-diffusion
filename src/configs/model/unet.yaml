@@ -1,6 +1,6 @@
 _target_: src.model.Unet
 img_size: 8                   # Latent space of 8x8
-init_dim: 64                  # Initial dimension size for downsampling
+init_dim: 128                  # Initial dimension size for downsampling
 dim_mults: [1, 2, 4, 8]          # Multiplier sequence for dimensionality in each downsampling stage
 time_dim: 256                 # Time embedding dimension
 in_channels: 4                # Number of channels in the latent space

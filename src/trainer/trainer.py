@@ -35,18 +35,14 @@ class Trainer(BaseTrainer):
                 self.lr_scheduler.step()
         else:
             # DDIM sampling
-            size = batch["img"].size(0)
+            size = batch["img"].size()
             x_self_cond = batch.get("x_self_cond", None)
             classes = batch.get("label", None)
             eta = 0.0  # DDIM deterministic sampling
 
             # Generate samples with DDIM
             sampled_latents = self.diffusion.p_sample(
-                size=(
-                    size,
-                    4,
-                    8,
-                ),
+                size=size,
                 x_self_cond=x_self_cond,
                 classes=classes,
                 eta=eta,

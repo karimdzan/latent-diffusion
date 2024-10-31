@@ -244,19 +244,21 @@ class BaseTrainer:
                 last_train_metrics = self.train_metrics.result()
                 self.train_metrics.reset()
 
-                size = batch["latent"].size()
+                size = batch["latent"][0:1, ...].size()
                 x_self_cond = batch.get("x_self_cond", None)
                 classes = batch.get("label", None)
                 eta = 0.0  # DDIM deterministic sampling
 
                 # Generate samples with DDIM
                 sampled_latents = self.diffusion.p_sample(
-                    size=size, x_self_cond=x_self_cond, classes=classes, eta=eta
+                    size=size, x_self_cond=x_self_cond, classes=classes[0], eta=eta
                 )
                 with torch.no_grad():
-                    imgs = self.vae.decode(sampled_latents).sample
+                    imgs = self.vae.decode(sampled_latents.to(self.device)).sample
                 # imgs = sampled_latents
-                save_images(imgs, "./", f"{epoch}")
+                self.writer.add_image(
+                    f"{epoch}_{batch_idx}", save_images(imgs, "./", f"{epoch}")
+                )
                 # batch["sampled_imgs"] = (imgs / 2 + 0.5).clamp(0, 1)
 
                 # for met in self.metrics["train"]:
@@ -270,7 +272,10 @@ class BaseTrainer:
         for part, dataloader in self.evaluation_dataloaders.items():
             val_logs = self._evaluation_epoch(epoch, part, dataloader)
             logs.update(**{f"{part}_{name}": value for name, value in val_logs.items()})
-
+        self.writer.add_checkpoint(
+            "/content/latent-diffusion/saved/testing/model_best.pth",
+            "/content/latent-diffusion/saved/testing",
+        )
         return logs
 
     def _evaluation_epoch(self, epoch, part, dataloader):

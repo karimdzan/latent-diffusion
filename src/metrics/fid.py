@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn.functional as F
 from pytorch_fid.fid_score import calculate_frechet_distance
@@ -27,15 +28,21 @@ class FIDMetric(BaseMetric):
         features = self.inception(images)[0]
         return features
 
+    def calculate_activation_statistics(self, images):
+        act = self._get_inception_features(images).cpu().numpy()
+        mu = np.mean(act, axis=0)
+        sigma = np.cov(act, rowvar=False)
+        return mu, sigma
+
     def __call__(self, img: torch.Tensor, sampled_imgs: torch.Tensor, **kwargs):
         real_images, fake_images = (
             img,
             sampled_imgs,
         )
 
-        real_features = self._get_inception_features(real_images).cpu().numpy()
-        fake_features = self._get_inception_features(fake_images).cpu().numpy()
+        real_mu, real_sigma = self.calculate_activation_statistics(real_images)
+        fake_mu, fake_sigma = self.calculate_activation_statistics(fake_images)
 
-        fid_score = calculate_frechet_distance(real_features, fake_features)
+        fid_score = calculate_frechet_distance(real_mu, real_sigma, fake_mu, fake_sigma)
 
         return torch.tensor(fid_score)
