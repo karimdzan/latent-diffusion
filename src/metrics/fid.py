@@ -29,7 +29,7 @@ class FIDMetric(BaseMetric):
         return features
 
     def calculate_activation_statistics(self, images):
-        act = self._get_inception_features(images).cpu().numpy()
+        act = self._get_inception_features(images).squeeze(3).squeeze(2).cpu().numpy()
         mu = np.mean(act, axis=0)
         sigma = np.cov(act, rowvar=False)
         return mu, sigma
@@ -45,4 +45,4 @@ class FIDMetric(BaseMetric):
 
         fid_score = calculate_frechet_distance(real_mu, real_sigma, fake_mu, fake_sigma)
 
-        return torch.tensor(fid_score)
+        return float(fid_score)

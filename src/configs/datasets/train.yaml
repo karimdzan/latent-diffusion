@@ -1,4 +1,6 @@
 train:
   _target_: src.datasets.FoodDataset
-  root_dir: '/Users/karim/Downloads/food_data/train'
-  train: True
+  root: '/train'
+inference:
+  _target_: src.datasets.FoodDataset
+  root: '/test'

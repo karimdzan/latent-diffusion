@@ -33,9 +33,13 @@ class Trainer(BaseTrainer):
             self.optimizer.step()
             if self.lr_scheduler is not None:
                 self.lr_scheduler.step()
+            if self.ema:
+                self.ema.update()
         else:
             # DDIM sampling
-            size = batch["img"].size()
+            with torch.no_grad():
+                latent = self.vae.encode(batch["img"]).latent_dist.sample()
+            size = latent.size()
             x_self_cond = batch.get("x_self_cond", None)
             classes = batch.get("label", None)
             eta = 0.0  # DDIM deterministic sampling
@@ -47,7 +51,9 @@ class Trainer(BaseTrainer):
                 classes=classes,
                 eta=eta,
             )
-            outputs = {"sampled_imgs": self.vae.decode(sampled_latents).sample}
+            outputs = {
+                "sampled_imgs": self.vae.decode(sampled_latents.to(self.device)).sample
+            }
             batch.update(outputs)
 
         # Update metrics

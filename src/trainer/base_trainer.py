@@ -34,6 +34,7 @@ class BaseTrainer:
         epoch_len=None,
         skip_oom=True,
         batch_transforms=None,
+        ema=None,
     ):
         """
         Args:
@@ -60,7 +61,7 @@ class BaseTrainer:
                 tensor name.
         """
         self.is_train = True
-
+        self.ema = ema
         self.config = config
         self.cfg_trainer = self.config.trainer
 
@@ -188,7 +189,10 @@ class BaseTrainer:
 
             if epoch % self.save_period == 0 or best:
                 self._save_checkpoint(epoch, save_best=best, only_best=True)
-
+                self.writer.add_checkpoint(
+                    "/content/latent-diffusion/saved/testing/model_best.pth",
+                    "/content/latent-diffusion/saved/testing",
+                )
             if stop_process:  # early_stop
                 break
 
@@ -247,6 +251,7 @@ class BaseTrainer:
                 size = batch["latent"][0:1, ...].size()
                 x_self_cond = batch.get("x_self_cond", None)
                 classes = batch.get("label", None)
+                food_class_name = batch.get("food_class_name", None)[0]
                 eta = 0.0  # DDIM deterministic sampling
 
                 # Generate samples with DDIM
@@ -257,7 +262,8 @@ class BaseTrainer:
                     imgs = self.vae.decode(sampled_latents.to(self.device)).sample
                 # imgs = sampled_latents
                 self.writer.add_image(
-                    f"{epoch}_{batch_idx}", save_images(imgs, "./", f"{epoch}")
+                    f"{food_class_name}_{epoch}_{batch_idx}",
+                    save_images(imgs, "./", f"{epoch}"),
                 )
                 # batch["sampled_imgs"] = (imgs / 2 + 0.5).clamp(0, 1)
 
@@ -269,13 +275,12 @@ class BaseTrainer:
         logs = last_train_metrics
 
         # Run val/test
-        for part, dataloader in self.evaluation_dataloaders.items():
-            val_logs = self._evaluation_epoch(epoch, part, dataloader)
-            logs.update(**{f"{part}_{name}": value for name, value in val_logs.items()})
-        self.writer.add_checkpoint(
-            "/content/latent-diffusion/saved/testing/model_best.pth",
-            "/content/latent-diffusion/saved/testing",
-        )
+        if epoch % self.save_period == 0:
+            for part, dataloader in self.evaluation_dataloaders.items():
+                val_logs = self._evaluation_epoch(epoch, part, dataloader)
+                logs.update(
+                    **{f"{part}_{name}": value for name, value in val_logs.items()}
+                )
         return logs
 
     def _evaluation_epoch(self, epoch, part, dataloader):

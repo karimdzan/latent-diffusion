@@ -7,6 +7,7 @@ from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
 from src.datasets.data_utils import get_dataloaders
+from src.model.ema import EMA
 from src.trainer import Trainer
 from src.utils.init_utils import set_random_seed, setup_saving_and_logging
 
@@ -43,8 +44,18 @@ def main(config):
     model = model.to(device)
     logger.info(model)
 
+    if config.trainer.ema:
+        ema = EMA(
+            model=model,
+            beta=0.9,
+            update_after_step=100,
+            update_every=10,
+            inv_gamma=1.0,
+            power=0.9,
+        )
+        model = ema.ema_model
     vae = AutoencoderKL.from_pretrained(
-        "CompVis/stable-diffusion-v1-4", subfolder="vae"
+        "ComawpVis/stable-diffusion-v1-4", subfolder="vae"
     ).to(device)
     # get function handles of loss and metrics
     loss_function = instantiate(config.loss_function).to(device)
@@ -74,6 +85,7 @@ def main(config):
         writer=writer,
         batch_transforms=batch_transforms,
         skip_oom=config.trainer.get("skip_oom", True),
+        ema=ema,
     )
 
     trainer.train()

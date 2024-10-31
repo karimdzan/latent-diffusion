@@ -45,7 +45,7 @@ def plot_images(imgs, config):
     return image
 
 
-def save_images(
+def process_images(
     images: torch.Tensor, dest_path: str, prefix: str = "", img_format: str = "jpeg"
 ):
     """
@@ -66,6 +66,7 @@ def save_images(
     images = images.cpu().permute(0, 2, 3, 1).detach().numpy()
     # images = (images * 255).astype(np.uint8)
     # # Save images
-    for i, img in enumerate(images):
-        save_path = os.path.join(dest_path, f"{prefix}{i:05}.{img_format}")
-        plt.imsave(save_path, img)
+    # for i, img in enumerate(images):
+    #     save_path = os.path.join(dest_path, f"{prefix}{i:05}.{img_format}")
+    #     plt.imsave(save_path, img)
+    return images

@@ -1,4 +1,4 @@
-device: "cpu"
+device: "cuda:0"
 train:
   - _target_: src.metrics.fid.FIDMetric
     device: ${metrics.device}

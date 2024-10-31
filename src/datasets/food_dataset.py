@@ -11,7 +11,7 @@ class FoodDataset(ImageFolder):
                 [
                     transforms.Resize((64, 64)),
                     transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.5], std=[0.5]),
+                    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
                 ]
             ),
             loader=lambda img: Image.open(img).convert("RGB"),
@@ -26,4 +26,5 @@ class FoodDataset(ImageFolder):
         image = self.loader(path)
         if self.transform is not None:
             image = self.transform(image)
-        return {"img": image, "label": target}
+        class_name = self.classes[target]
+        return {"img": image, "label": target, "food_class_name": class_name}
