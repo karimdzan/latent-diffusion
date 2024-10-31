@@ -1,6 +1,6 @@
 train:
   _target_: src.datasets.FoodDataset
-  root: '/train'
+  root: '../train'
 inference:
   _target_: src.datasets.FoodDataset
-  root: '/test'
+  root: '../test'

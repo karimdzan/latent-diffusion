@@ -41,9 +41,6 @@ def main(config):
 
     # build model architecture, then print to console
     model = instantiate(config.model)
-    model = model.to(device)
-    logger.info(model)
-
     if config.trainer.ema:
         ema = EMA(
             model=model,
@@ -54,8 +51,12 @@ def main(config):
             power=0.9,
         )
         model = ema.ema_model
+    else:
+        ema = None
+    model = model.to(device)
+    logger.info(model)
     vae = AutoencoderKL.from_pretrained(
-        "ComawpVis/stable-diffusion-v1-4", subfolder="vae"
+        "CompVis/stable-diffusion-v1-4", subfolder="vae"
     ).to(device)
     # get function handles of loss and metrics
     loss_function = instantiate(config.loss_function).to(device)

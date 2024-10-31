@@ -7,7 +7,7 @@ from torchvision.transforms import ToPILImage
 from tqdm.auto import tqdm
 
 from src.datasets.data_utils import inf_loop
-from src.logger.utils import save_images
+from src.logger.utils import process_images
 from src.metrics.tracker import MetricTracker
 from src.model.ldm import Diffusion
 from src.utils.io_utils import ROOT_PATH
@@ -71,7 +71,7 @@ class BaseTrainer:
         self.logger = logger
         self.log_step = config.trainer.get("log_step", 50)
 
-        self.model = model
+        self.model = torch.compile(model)
         self.vae = vae
         self.diffusion = Diffusion(model=model, device=device, sample_every=5)
         self.criterion = criterion
@@ -247,24 +247,24 @@ class BaseTrainer:
                 # because we are interested in recent train metrics
                 last_train_metrics = self.train_metrics.result()
                 self.train_metrics.reset()
-
-                size = batch["latent"][0:1, ...].size()
-                x_self_cond = batch.get("x_self_cond", None)
-                classes = batch.get("label", None)
-                food_class_name = batch.get("food_class_name", None)[0]
-                eta = 0.0  # DDIM deterministic sampling
-
-                # Generate samples with DDIM
-                sampled_latents = self.diffusion.p_sample(
-                    size=size, x_self_cond=x_self_cond, classes=classes[0], eta=eta
-                )
-                with torch.no_grad():
-                    imgs = self.vae.decode(sampled_latents.to(self.device)).sample
                 # imgs = sampled_latents
-                self.writer.add_image(
-                    f"{food_class_name}_{epoch}_{batch_idx}",
-                    save_images(imgs, "./", f"{epoch}"),
-                )
+                if self.epoch % 5 == 0:
+                    size = batch["latent"][0:1, ...].size()
+                    x_self_cond = batch.get("x_self_cond", None)
+                    classes = batch.get("label", None)
+                    food_class_name = batch.get("food_class_name", None)[0]
+                    eta = 0.0  # DDIM deterministic sampling
+
+                    # Generate samples with DDIM
+                    sampled_latents = self.diffusion.p_sample(
+                        size=size, x_self_cond=x_self_cond, classes=classes[0], eta=eta
+                    )
+                    with torch.no_grad():
+                        imgs = self.vae.decode(sampled_latents.to(self.device)).sample
+                    self.writer.add_image(
+                        f"{food_class_name}_{epoch}_{batch_idx}",
+                        process_images(imgs, "./", f"{epoch}"),
+                    )
                 # batch["sampled_imgs"] = (imgs / 2 + 0.5).clamp(0, 1)
 
                 # for met in self.metrics["train"]:
