@@ -248,7 +248,7 @@ class BaseTrainer:
                 last_train_metrics = self.train_metrics.result()
                 self.train_metrics.reset()
                 # imgs = sampled_latents
-                if self.epoch % 5 == 0:
+                if epoch % 5 == 0:
                     size = batch["latent"][0:1, ...].size()
                     x_self_cond = batch.get("x_self_cond", None)
                     classes = batch.get("label", None)

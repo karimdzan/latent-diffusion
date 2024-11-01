@@ -2,6 +2,7 @@ import torch
 from tqdm.auto import tqdm
 
 from src.metrics.tracker import MetricTracker
+from src.model import Diffusion
 from src.trainer.base_trainer import BaseTrainer
 
 
@@ -17,6 +18,7 @@ class Inferencer(BaseTrainer):
     def __init__(
         self,
         model,
+        vae,
         config,
         device,
         dataloaders,
@@ -57,6 +59,8 @@ class Inferencer(BaseTrainer):
         self.device = device
 
         self.model = model
+        self.diffusion = Diffusion(model=model, device=device, sample_every=5)
+        self.vae = vae
         self.batch_transforms = batch_transforms
 
         # define dataloaders
@@ -118,37 +122,27 @@ class Inferencer(BaseTrainer):
         """
         batch = self.move_batch_to_device(batch)
         batch = self.transform_batch(batch)  # transform batch on device -- faster
+        with torch.no_grad():
+            latent = self.vae.encode(batch["img"]).latent_dist.sample()
+        size = latent.size()
+        x_self_cond = batch.get("x_self_cond", None)
+        classes = batch.get("label", None)
+        eta = 0.0  # DDIM deterministic sampling
 
-        outputs = self.model(**batch)
+        # Generate samples with DDIM
+        sampled_latents = self.diffusion.p_sample(
+            size=size,
+            x_self_cond=x_self_cond,
+            classes=classes,
+            eta=eta,
+        )
+        decoded_repr = self.vae.decode(sampled_latents.to(self.device)).sample
+        outputs = {"sampled_imgs": (decoded_repr / 2 + 0.5).clamp(0, 1)}
         batch.update(outputs)
 
         if metrics is not None:
             for met in self.metrics["inference"]:
                 metrics.update(met.name, met(**batch))
-
-        # Some saving logic. This is an example
-        # Use if you need to save predictions on disk
-
-        batch_size = batch["logits"].shape[0]
-        current_id = batch_idx * batch_size
-
-        for i in range(batch_size):
-            # clone because of
-            # https://github.com/pytorch/pytorch/issues/1995
-            logits = batch["logits"][i].clone()
-            label = batch["labels"][i].clone()
-            pred_label = logits.argmax(dim=-1)
-
-            output_id = current_id + i
-
-            output = {
-                "pred_label": pred_label,
-                "label": label,
-            }
-
-            if self.save_path is not None:
-                # you can use safetensors or other lib here
-                torch.save(output, self.save_path / part / f"output_{output_id}.pth")
 
         return batch
 

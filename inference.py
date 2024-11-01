@@ -2,6 +2,7 @@ import warnings
 
 import hydra
 import torch
+from diffusers import AutoencoderKL
 from hydra.utils import instantiate
 
 from src.datasets.data_utils import get_dataloaders
@@ -36,6 +37,9 @@ def main(config):
     # build model architecture, then print to console
     model = instantiate(config.model).to(device)
     print(model)
+    vae = AutoencoderKL.from_pretrained(
+        "CompVis/stable-diffusion-v1-4", subfolder="vae"
+    ).to(device)
 
     # get metrics
     metrics = instantiate(config.metrics)
@@ -46,6 +50,7 @@ def main(config):
 
     inferencer = Inferencer(
         model=model,
+        vae=vae,
         config=config,
         device=device,
         dataloaders=dataloaders,
